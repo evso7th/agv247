@@ -1,7 +1,7 @@
 
 /**
- * #ЗАЧЕМ: UI AuraGroove V6.0 — "Header Ergonomics Update".
- * #ЧТО: ПЛАН №1635 — Активный заголовок, перегруппировка кнопок управления.
+ * #ЗАЧЕМ: UI AuraGroove V6.1 — "Header Heritage Integration".
+ * #ЧТО: ПЛАН №1650 — Добавлена кнопка "Like" в хедер Навигатора.
  */
 'use client';
 
@@ -186,7 +186,6 @@ function SortableRouteItem({
                 isDragging && "opacity-50 z-50 scale-105 shadow-2xl ring-2 ring-primary/50"
             )}
         >
-            {/* #ЗАЧЕМ: Тонкий прогресс-бар для активного элемента. */}
             {isActive && progress !== undefined && (
                 <div className="absolute bottom-0 left-0 h-[2px] w-full bg-primary/20">
                     <div 
@@ -257,7 +256,6 @@ export function AuraGrooveRoute(props: AuraGrooveProps) {
                 <header className="p-3 bg-background/40 shrink-0">
                     {/* Row 1: AuraGroove (Active) | Play */}
                     <div className="flex items-center justify-between mb-2">
-                        {/* #ЗАЧЕМ: ПЛАН №1635. Активный заголовок ведет на Home. */}
                         <div 
                             onClick={props.handleGoHome}
                             className="flex flex-row items-center gap-2 cursor-pointer hover:opacity-80 transition-all"
@@ -273,7 +271,7 @@ export function AuraGrooveRoute(props: AuraGrooveProps) {
                     
                     {/* Row 2: Secondary Controls */}
                     <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
-                        {/* Left Side: Home, Broadcast, Record, Regenerate */}
+                        {/* Left Side: Home, Broadcast, Record, Regenerate, Like */}
                         <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" onClick={props.handleGoHome} className="h-8 w-8 shrink-0"><Home className="h-4 w-4" /></Button>
                             <Button variant={props.isBroadcastActive ? "destructive" : "outline"} onClick={props.handleToggleBroadcast} className="h-8 w-8 p-0 shrink-0">
@@ -283,6 +281,16 @@ export function AuraGrooveRoute(props: AuraGrooveProps) {
                                 <Radio className={cn("h-4 w-4", props.isRecording && "animate-pulse")} />
                             </Button>
                             <Button variant="outline" onClick={props.handleRegenerate} className="h-8 w-8 p-0 shrink-0"><RefreshCw className={cn("h-4 w-4", props.isRegenerating && "animate-spin")} /></Button>
+                            {/* #ЗАЧЕМ: ПЛАН №1650. Кнопка Лайк в общем ряду. */}
+                            <Button 
+                                variant="outline" 
+                                onClick={props.handleSaveMasterpiece} 
+                                disabled={!props.isPlaying}
+                                className="h-8 w-8 p-0 shrink-0"
+                                title="Like"
+                            >
+                                <ThumbsUp className="h-4 w-4 text-primary" />
+                            </Button>
                         </div>
                         {/* Right Side: EQ, Mixer (Under Play) */}
                         <div className="flex items-center gap-1">

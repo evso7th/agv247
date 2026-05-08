@@ -1,7 +1,7 @@
 
 /**
- * #ЗАЧЕМ: Хук управления музыкой V8.5 — "Strict Navigator Algorithm".
- * #ЧТО: ПЛАН №1640 — Приоритет маршрута, сброс на старт при нажатии Play, бесконечная ротация.
+ * #ЗАЧЕМ: Хук управления музыкой V8.6 — "Masterpiece Registry Restore".
+ * #ЧТО: ПЛАН №1650 — Реализована функция handleSaveMasterpiece для сохранения шедевров.
  */
 'use client';
 
@@ -17,6 +17,8 @@ import { GENRE_MASTER_MIX } from "@/lib/master-mix";
 import { getBlueprint } from "@/lib/blueprints";
 import { useToast } from "./use-toast";
 import { arrayMove } from "@dnd-kit/sortable";
+import { saveMasterpiece } from "@/lib/firebase-service";
+import { useFirestore } from "@/firebase/provider";
 
 const SAVED_JOURNEYS_KEY = 'AuraGroove_SavedJourneys';
 const CURRENT_ROUTE_KEY = 'AuraGroove_CurrentRoute';
@@ -120,6 +122,7 @@ export const useAuraGroove = (): AuraGrooveProps => {
   } = useAudioEngine(); 
   
   const { toast } = useToast();
+  const db = useFirestore();
   
   const [drumSettings, setDrumSettings] = useState<DrumSettings>({ pattern: 'composer', volume: 0.5, kickVolume: 1.0, enabled: true });
   const [instrumentSettings, setInstrumentSettings] = useState<InstrumentSettings>({
@@ -318,10 +321,6 @@ export const useAuraGroove = (): AuraGrooveProps => {
 
   useEffect(() => { initialize(); }, [initialize]);
 
-  /**
-   * #ЗАЧЕМ: Реализация Navigator Routing V2.5 (ПЛАН №1640).
-   * #ЧТО: Бесконечная циклическая ротация или Shuffle.
-   */
   const handleRouteTransition = useCallback(() => {
       if (route.length === 0) return;
 
@@ -489,6 +488,19 @@ export const useAuraGroove = (): AuraGrooveProps => {
       }
   };
 
+  const handleSaveMasterpiece = () => {
+    if (!db) return;
+    saveMasterpiece(db, {
+        seed: currentSeed,
+        mood,
+        genre,
+        density,
+        bpm,
+        instrumentSettings: JSON.parse(JSON.stringify(instrumentSettings)),
+        isArbiterFind: false
+    });
+  };
+
   return {
     isInitializing, isPlaying, isRegenerating, isRecording, isBroadcastActive, isWarmingUp, warmUpTimeLeft,
     loadingText: isInitializing ? 'Initializing...' : 'Ready',
@@ -498,8 +510,6 @@ export const useAuraGroove = (): AuraGrooveProps => {
     handlePlayPause: async () => {
         if (!isInitialized) return;
         if (!isPlaying) {
-            // #ЗАЧЕМ: ПЛАН №1640. Строгий алгоритм Навигатора.
-            // Если выбран хоть один элемент маршрута - играем ТОЛЬКО маршрут и именно с ПЕРВОГО элемента.
             if (route.length > 0) {
                 setActiveRouteIndex(0);
                 applyRouteItem(route[0]);
@@ -519,7 +529,7 @@ export const useAuraGroove = (): AuraGrooveProps => {
         }
         toggleBroadcast();
     },
-    handleSaveMasterpiece: () => {},
+    handleSaveMasterpiece,
     drumSettings, setDrumSettings, instrumentSettings, setInstrumentSettings: (part, name) => { setInstrumentSettings(prev => ({ ...prev, [part]: { ...prev[part as keyof typeof prev], name } })); setInstrument(part as any, name as any); },
     handleBassTechniqueChange: () => {}, handleVolumeChange, textureSettings, 
     handleTextureEnabledChange: (part, enabled) => setTextureSettings(prev => ({ ...prev, [part]: { ...prev[part], enabled }})),
