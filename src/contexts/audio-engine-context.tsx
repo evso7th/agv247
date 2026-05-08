@@ -1,8 +1,8 @@
 
 /**
- * @fileOverview Audio Engine Context V40.4 — "Telecaster Volume Boost".
- * #ЗАЧЕМ: Системное усиление гитары Telecaster по запросу пользователя.
- * #ЧТО: ПЛАН №1598 — Громкость увеличена в 2 раза.
+ * @fileOverview Audio Engine Context V40.5 — "AI Arbiter Activation".
+ * #ЗАЧЕМ: Оживление автоматического поиска шедевров.
+ * #ЧТО: ПЛАН №1655 — Снижен порог до 0.85, добавлена золотая телеметрия Арбитра.
  */
 'use client';
 
@@ -47,7 +47,7 @@ const VOICE_BALANCE: Record<string, number> = {
 const SAMPLER_DEFAULTS: Record<string, number> = {
     master: 1.0,
     acoustic: 0.15,
-    electric: 0.30, // #ЗАЧЕМ: ПЛАН №1598. Удвоено с 0.15.
+    electric: 0.30, 
     piano: 0.6,
     orchestral: 0.29,
     cs80: 0.1,
@@ -180,7 +180,6 @@ export const AudioEngineProvider = ({ children }: { children: React.ReactNode })
     const balancedVolume = volume * (VOICE_BALANCE[part] ?? 1);
     const gainNode = gainNodesRef.current[part];
     if (gainNode && audioContextRef.current) {
-        // #ЗАЧЕМ: Усиление отклика. Использование setValueAtTime перед Target.
         const now = audioContextRef.current.currentTime;
         gainNode.gain.setValueAtTime(gainNode.gain.value, now);
         gainNode.gain.setTargetAtTime(balancedVolume, now, 0.015);
@@ -192,19 +191,18 @@ export const AudioEngineProvider = ({ children }: { children: React.ReactNode })
       const now = audioContextRef.current.currentTime;
       const m = gains.master ?? 1.0;
       
-      // #ЗАЧЕМ: Устранение конфликтов. Модулируется только Master Gain.
       masterGainNodeRef.current?.gain.setTargetAtTime(m, now, 0.05);
       
       blackGuitarSamplerRef.current?.setPreampGain(SAMPLER_DEFAULTS.acoustic * gains.acoustic);
       telecasterSamplerRef.current?.setPreampGain(SAMPLER_DEFAULTS.electric * gains.electric);
-      darkTelecasterSamplerRef.current?.setPreampGain(4.4 * gains.electric); // #ЗАЧЕМ: ПЛАН №1598. Удвоено с 2.2.
+      darkTelecasterSamplerRef.current?.setPreampGain(4.4 * gains.electric); 
       cs80SamplerRef.current?.setPreampGain(SAMPLER_DEFAULTS.cs80 * gains.cs80);
       melodyManagerV2Ref.current?.setPreampGain(gains.electric); 
       bassManagerV2Ref.current?.setPreampGain(SAMPLER_DEFAULTS.bass * (gains.bass || 1.0));
       pianoAccompanimentManagerRef.current?.setVolume(gains.piano); 
       harmonyManagerRef.current?.setVolume(gains.orchestral); 
       
-      accompanimentManagerV2Ref.current?.setPreampGain(1.0); // Reset local preamp to unity
+      accompanimentManagerV2Ref.current?.setPreampGain(1.0); 
 
       const chordsSampler = (harmonyManagerRef.current as any)?.guitarChords as any;
       if (chordsSampler) chordsSampler.setPreampGain(SAMPLER_DEFAULTS.chords * gains.chords);
@@ -456,7 +454,11 @@ export const AudioEngineProvider = ({ children }: { children: React.ReactNode })
                     scheduleEvents(payload.events, nextBarTimeRef.current, payload.actualBpm || 75, payload.barCount, payload.instrumentHints);
                     nextBarTimeRef.current += payload.barDuration;
 
-                    if (payload.beautyScore >= 0.88 && settingsRef.current && payload.seed !== lastSavedArbiterSeedRef.current) {
+                    // #ЗАЧЕМ: ПЛАН №1655. Автоматическая работа AI-Арбитра.
+                    // Снижение порога до 0.85 для активного пополнения базы.
+                    if (payload.beautyScore >= 0.85 && settingsRef.current && payload.seed !== lastSavedArbiterSeedRef.current) {
+                        console.log(`%c[AI Arbiter] High Resonance Detected: ${payload.beautyScore.toFixed(2)}! Recording masterpiece into Cloud Registry...`, 'color: #FFD700; font-weight: bold; font-size: 10px;');
+                        
                         saveMasterpiece(db, { 
                             seed: payload.seed, 
                             mood: settingsRef.current.mood, 
